@@ -1,10 +1,15 @@
 package lt.esdc.text.interpreter.impl;
 
+import lt.esdc.text.exception.TextException;
 import lt.esdc.text.interpreter.ExpressionInterpreter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
 public class MathExpressionInterpreter implements ExpressionInterpreter {
+
+    private static final Logger logger = LogManager.getLogger(MathExpressionInterpreter.class);
 
     private static final Map<String, Integer> PRIORITY = Map.of(
             "+", 1,
@@ -15,8 +20,21 @@ public class MathExpressionInterpreter implements ExpressionInterpreter {
 
     @Override
     public int interpret(String expression) {
-        List<String> postfix = toPostfix(expression);
-        return evaluate(postfix);
+        try {
+            logger.info("Интерпретация выражения: {}", expression);
+            List<String> postfix = toPostfix(expression);
+            logger.debug("Преобразовано в постфикс: {}", postfix);
+            int result = evaluate(postfix);
+            logger.info("Результат выражения: {} → {}", expression, result);
+            return result;
+        } catch (Exception e) {
+            logger.error("Ошибка интерпретации выражения: {}", expression, e);
+            try {
+                throw new TextException("Ошибка интерпретации выражения: " + expression, e);
+            } catch (TextException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
     }
 
     private List<String> toPostfix(String expression) {
@@ -43,7 +61,7 @@ public class MathExpressionInterpreter implements ExpressionInterpreter {
                 while (!stack.isEmpty() && !stack.peek().equals("(")) {
                     output.add(stack.pop());
                 }
-                stack.pop(); // удаляем "("
+                stack.pop();
             }
         }
 

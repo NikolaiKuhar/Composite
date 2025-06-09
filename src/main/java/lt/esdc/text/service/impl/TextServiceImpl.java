@@ -16,7 +16,6 @@ public class TextServiceImpl implements TextService {
             'а', 'е', 'ё', 'и', 'о', 'у', 'ы', 'э', 'ю', 'я'
     );
 
-    // #1: Сортировка абзацев по количеству предложений
     @Override
     public List<TextComponent> sortParagraphsBySentenceCount(TextComponent text) {
         return text.getChildren().stream()
@@ -24,7 +23,6 @@ public class TextServiceImpl implements TextService {
                 .collect(Collectors.toList());
     }
 
-    // #2: Поиск предложений с самым длинным словом
     @Override
     public List<TextComponent> findSentencesWithLongestWord(TextComponent text) {
         List<TextComponent> result = new ArrayList<>();
@@ -49,7 +47,6 @@ public class TextServiceImpl implements TextService {
         return result;
     }
 
-    // #3: Удаление предложений с количеством слов < N
     @Override
     public void removeSentencesWithWordCountLessThan(TextComponent text, int limit) {
         for (TextComponent paragraph : text.getChildren()) {
@@ -62,7 +59,6 @@ public class TextServiceImpl implements TextService {
         }
     }
 
-    // #4: Поиск одинаковых слов (без учёта регистра)
     @Override
     public Map<String, Long> findAllRepeatedWords(TextComponent text) {
         return text.getChildren().stream() // paragraphs
@@ -76,7 +72,6 @@ public class TextServiceImpl implements TextService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    // #5: Подсчёт гласных и согласных в предложениях
     @Override
     public Map<TextComponent, int[]> countVowelsAndConsonants(TextComponent text) {
         Map<TextComponent, int[]> result = new HashMap<>();
