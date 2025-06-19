@@ -6,16 +6,16 @@ import lt.esdc.text.parser.Parser;
 import lt.esdc.text.parser.impl.*;
 import lt.esdc.text.reader.TextReader;
 import lt.esdc.text.service.TextService;
-import lt.esdc.text.service.impl.TextServiceImpl;
+import lt.esdc.text.service.impl.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
 public class Main {
-
     private static final Logger logger = LogManager.getLogger(Main.class);
 
     public static void main(String[] args) throws URISyntaxException {
@@ -24,6 +24,7 @@ public class Main {
             TextReader reader = new TextReader();
             String rawText = reader.read(path);
 
+            // Парсинг
             Parser textParser = new TextParser();
             Parser paragraphParser = new ParagraphParser();
             Parser sentenceParser = new SentenceParser();
@@ -38,26 +39,34 @@ public class Main {
             TextComponent parsedText = textParser.parse(rawText);
             logger.info("Текст успешно распарсен");
 
-            TextService service = new TextServiceImpl();
-
-            List<TextComponent> sortedParagraphs = service.sortParagraphsBySentenceCount(parsedText);
+            // Сортировка абзацев
+            TextService<List<TextComponent>> sortService = new SortParagraphsBySentenceCount();
+            List<TextComponent> sorted = sortService.execute(parsedText);
             logger.info("Сортировка абзацев по количеству предложений:");
-            sortedParagraphs.forEach(p -> logger.info(p.toString()));
+            sorted.forEach(p -> logger.info(p.toString()));
 
-            List<TextComponent> longestSentences = service.findSentencesWithLongestWord(parsedText);
-            logger.info("Предложения с самым длинным словом:");
-            longestSentences.forEach(s -> logger.info(s.toString()));
+            // Предложение с самым длинным словом
+            FindSentencesWithLongestWord longestFinder = new FindSentencesWithLongestWord();
+            List<TextComponent> longest = longestFinder.execute(parsedText);
+            logger.info("Предложение с самым длинным словом:\n{}", longest);
 
-            service.removeSentencesWithWordCountLessThan(parsedText, 3);
-            logger.info("Удалены предложения с количеством слов < 3");
+            // Удаление коротких предложений
+            TextService<TextComponent> remover = new RemoveSentencesWithWordCountLessThan(3);
+            TextComponent filtered = remover.execute(parsedText);
+            logger.info("Текст без предложений с < 3 слов:\n{}", filtered);
 
-            Map<String, Long> repeatedWords = service.findAllRepeatedWords(parsedText);
-            logger.info("Повторяющиеся слова: {}", repeatedWords);
+            // Повторяющиеся слова
+            FindAllRepeatedWords counter = new FindAllRepeatedWords();
+            Map<String, Long> repeated = counter.execute(parsedText);
+            logger.info("Повторяющиеся слова: {}", repeated);
 
-            Map<TextComponent, int[]> vowelConsonantCount = service.countVowelsAndConsonants(parsedText);
-            vowelConsonantCount.forEach((sentence, count) ->
-                    logger.info("V: {}, C: {} | {}", count[0], count[1], sentence.toString())
-            );
+            // Гласные и согласные
+            TextService<Map<TextComponent, int[]>> vowelService = new CountVowelsAndConsonants();
+            Map<TextComponent, int[]> result = vowelService.execute(parsedText);
+            result.forEach((sentence, count) ->
+                    logger.info("V: {}, C: {} → {}", count[0], count[1], sentence.toString()));
+
+
 
         } catch (TextException e) {
             logger.error("Ошибка в процессе обработки текста", e);
